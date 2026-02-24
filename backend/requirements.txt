@@ -6,3 +6,8 @@ python-dotenv
 supabase
 stripe
 pydantic
+python-multipart
+email-validator
+websockets>=13.0
+gunicorn
+requests
