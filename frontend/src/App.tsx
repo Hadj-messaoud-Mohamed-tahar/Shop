@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { BrowserRouter, Link, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.css'
 
-const API_BASE_URL = 'http://localhost:8000/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 type AuthState = {
   token: string | null
@@ -14,6 +14,7 @@ type Product = {
   name: string
   price: number
   image_url?: string | null
+  stock: number
 }
 
 type CartItem = {
