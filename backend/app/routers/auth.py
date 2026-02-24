@@ -67,7 +67,8 @@ def login(payload: LoginRequest) -> TokenResponse:
         auth_response = client.auth.sign_in_with_password(
             {"email": payload.email, "password": payload.password}
         )
-    except Exception:
+    except Exception as e:
+        print(f"Login error: {e}")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     user_obj = getattr(auth_response, "user", None)
     if not user_obj or not getattr(user_obj, "id", None):
