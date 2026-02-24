@@ -1,0 +1,3 @@
+URL=https://duvmojrgdjkuxgaakhin.supabase.co
+[service_role] CONNECTED rows=0
+[anon] CONNECTED rows=0
