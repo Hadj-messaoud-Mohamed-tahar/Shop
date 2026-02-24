@@ -50,6 +50,9 @@ def create_checkout_session(current_user=Depends(get_current_user)):
         )
     if not line_items:
         raise HTTPException(status_code=400, detail="No valid items")
+    
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    
     s = get_stripe_client()
     try:
         session = s.checkout.Session.create(
@@ -60,8 +63,8 @@ def create_checkout_session(current_user=Depends(get_current_user)):
                 "user_id": str(current_user["id"]),
                 "cart_id": str(cart["id"]),
             },
-            success_url="http://localhost:5173/?payment=success",
-            cancel_url="http://localhost:5173/?payment=cancel",
+            success_url=f"{frontend_url}/?payment=success",
+            cancel_url=f"{frontend_url}/?payment=cancel",
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Stripe error: {exc}") from exc
