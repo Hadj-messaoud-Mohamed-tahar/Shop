@@ -51,7 +51,9 @@ def create_checkout_session(current_user=Depends(get_current_user)):
     if not line_items:
         raise HTTPException(status_code=400, detail="No valid items")
     
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+    if not frontend_url.startswith("http"):
+        frontend_url = f"https://{frontend_url}"
     
     s = get_stripe_client()
     try:
