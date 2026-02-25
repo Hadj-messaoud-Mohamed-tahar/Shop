@@ -58,8 +58,14 @@ def register(payload: RegisterRequest):
         existing_user_res = client.table("users").select("id").eq("email", payload.email).limit(1).execute()
         existing_user = existing_user_res.data[0] if existing_user_res.data else None
         if existing_user and existing_user["id"] != user_id:
+            stale_id = existing_user["id"]
+            # Delete dependent records manually because CASCADE is not set on foreign keys
+            client.table("carts").delete().eq("user_id", stale_id).execute()
+            client.table("orders").delete().eq("user_id", stale_id).execute()
+            client.table("pc_builds").delete().eq("user_id", stale_id).execute()
+            client.table("reviews").delete().eq("user_id", stale_id).execute()
             # Delete the old record
-            client.table("users").delete().eq("id", existing_user["id"]).execute()
+            client.table("users").delete().eq("id", stale_id).execute()
     except Exception as e:
         print(f"Warning cleaning up stale user: {e}")
 
@@ -101,7 +107,13 @@ def login(payload: LoginRequest) -> TokenResponse:
             stale_user_res = client.table("users").select("id").eq("email", payload.email).limit(1).execute()
             stale_user = stale_user_res.data[0] if stale_user_res.data else None
             if stale_user and stale_user["id"] != user_id:
-                client.table("users").delete().eq("id", stale_user["id"]).execute()
+                stale_id = stale_user["id"]
+                # Delete dependent records manually
+                client.table("carts").delete().eq("user_id", stale_id).execute()
+                client.table("orders").delete().eq("user_id", stale_id).execute()
+                client.table("pc_builds").delete().eq("user_id", stale_id).execute()
+                client.table("reviews").delete().eq("user_id", stale_id).execute()
+                client.table("users").delete().eq("id", stale_id).execute()
         except Exception as e:
             print(f"Warning cleaning up stale user in login: {e}")
 
