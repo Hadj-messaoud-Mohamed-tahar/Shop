@@ -24,7 +24,7 @@ def run_seed():
                 "brand": "NVIDIA",
                 "category_id": cat_map.get("gpu"),
                 "stock": 20,
-                "image_url": "https://images.unsplash.com/photo-1602080857636-21b0b3a1c9d2?w=800",
+                "image_url": "/images/products/rtx-4070.jpg",
             },
             {
                 "name": "AMD Ryzen 7 7800X3D",
@@ -33,7 +33,7 @@ def run_seed():
                 "brand": "AMD",
                 "category_id": cat_map.get("cpu"),
                 "stock": 15,
-                "image_url": "https://images.unsplash.com/photo-1614064642274-7049912a416c?w=800",
+                "image_url": "/images/products/ryzen-7-7800x3d.jpg",
             },
             {
                 "name": "Intel Core i7-13700K",
@@ -42,7 +42,7 @@ def run_seed():
                 "brand": "Intel",
                 "category_id": cat_map.get("cpu"),
                 "stock": 25,
-                "image_url": "https://images.unsplash.com/photo-1549921296-3b2b2dbe0a42?w=800",
+                "image_url": "/images/products/intel-i7-13700k.webp",
             },
         ]
         client.table("products").insert(products).execute()

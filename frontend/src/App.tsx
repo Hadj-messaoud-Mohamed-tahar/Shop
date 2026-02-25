@@ -21,6 +21,11 @@ type CartItem = {
   id: number
   product_id: number
   quantity: number
+  product?: {
+    name: string
+    price: number
+    image_url?: string | null
+  }
 }
 
 type CartResponse = {
@@ -28,48 +33,135 @@ type CartResponse = {
   items: CartItem[]
 }
 
-function HomePage() {
+function HomePage({ auth }: { auth: AuthState }) {
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const fetchFeatured = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/products`)
+        if (res.ok) {
+          const data = (await res.json()) as Product[]
+          setFeaturedProducts(data.slice(0, 4))
+        }
+      } catch (e) {
+        console.error("Failed to fetch products", e)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchFeatured()
+  }, [])
+
+  const handleAddToCart = async (productId: number) => {
+    if (!auth.token) {
+      navigate('/login')
+      return
+    }
+    try {
+      await fetch(`${API_BASE_URL}/cart/items`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: JSON.stringify({ product_id: productId, quantity: 1 }),
+      })
+      alert('Produit ajouté au panier !')
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   return (
-    <div className="app-main app-main-wide">
-      <div className="app-main-col">
-        <section className="app-card stack-md">
-          <div className="section-header">
-            <div>
-              <div className="section-kicker">Plateforme e‑commerce PC</div>
-              <h1 className="hero-heading">
-                Monte ton <span className="hero-highlight">setup gaming</span> comme un pro.
-              </h1>
-            </div>
-          </div>
-          <p className="section-subtitle">
-            Catalogue de composants, panier dynamique, configs personnalisées et paiement sécurisé à venir.
+    <div className="app-main">
+      {/* Hero Section */}
+      <section className="hero-section">
+        <div className="hero-content">
+          <h1 className="hero-title">
+            Le futur du <br />
+            <span className="text-gradient">Gaming PC</span>
+          </h1>
+          <p className="hero-subtitle">
+            Configure ta machine de rêve avec les meilleurs composants du marché. 
+            Performance extrême, design soigné.
           </p>
-          <div className="hero-badges">
-            <div className="hero-badge">GPU, CPU, RAM, SSD, PC complets</div>
-            <div className="hero-badge">FastAPI · React · Supabase · Stripe</div>
-            <div className="hero-badge">Interface admin et configurateur PC en préparation</div>
+          <Link to="/catalog" className="hero-cta">
+            Voir le catalogue
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+          </Link>
+        </div>
+      </section>
+
+      {/* Categories */}
+      <section>
+        <div className="section-heading">
+          <h2>Catégories Populaires</h2>
+        </div>
+        <div className="categories-grid">
+          <div className="category-card">
+            <div className="category-icon">🎮</div>
+            <div className="category-name">Cartes Graphiques</div>
           </div>
-          <div className="form-actions">
-            <Link to="/catalog">
-              <button type="button">Découvrir le catalogue</button>
-            </Link>
+          <div className="category-card">
+            <div className="category-icon">⚡</div>
+            <div className="category-name">Processeurs</div>
           </div>
-        </section>
-        <section className="app-card app-card-secondary stack-md">
-          <div className="section-header">
-            <div>
-              <div className="section-kicker">En un coup d’œil</div>
-              <h2 className="section-title">Fonctionnalités déjà en place</h2>
-            </div>
+          <div className="category-card">
+            <div className="category-icon">💾</div>
+            <div className="category-name">Stockage SSD</div>
           </div>
-          <div className="pill-ghost-group">
-            <div className="pill-ghost pill-ghost-strong">Inscription / Connexion JWT</div>
-            <div className="pill-ghost pill-ghost-accent">Catalogue de produits</div>
-            <div className="pill-ghost">Panier lié au compte</div>
-            <div className="pill-ghost">Base de données Supabase structurée</div>
+          <div className="category-card">
+            <div className="category-icon">🖥️</div>
+            <div className="category-name">Boîtiers</div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
+
+      {/* Featured Products */}
+      <section className="featured-section">
+        <div className="section-heading">
+          <h2>Nouveautés</h2>
+          <Link to="/catalog" className="section-link">
+            Tout voir 
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </Link>
+        </div>
+        
+        {loading ? (
+          <p className="muted">Chargement...</p>
+        ) : (
+          <div className="product-grid">
+            {featuredProducts.map((p) => (
+              <article key={p.id} className="product-card">
+                <div className="product-image-container">
+                  {p.image_url && (
+                    <img className="product-image" src={p.image_url} alt={p.name} />
+                  )}
+                  <span className="badge-new">NEW</span>
+                </div>
+                <div className="product-content">
+                  <div>
+                    <h3 className="product-title">{p.name}</h3>
+                  </div>
+                  <div className="product-footer">
+                    <span className="product-price">{p.price.toFixed(2)} €</span>
+                    <button 
+                      className="add-to-cart-btn"
+                      onClick={() => handleAddToCart(p.id)}
+                      disabled={p.stock <= 0}
+                    >
+                      {p.stock > 0 ? '+' : '×'}
+                    </button>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }
@@ -166,27 +258,31 @@ function CatalogPage({ auth }: { auth: AuthState }) {
           <div className="product-grid">
             {products.map((p) => (
               <article key={p.id} className="product-card">
-                <div className="stack-sm">
-                  <h3 className="product-name">{p.name}</h3>
-                  <p className="product-price">{p.price.toFixed(2)} €</p>
-                </div>
-                {p.image_url && (
-                  <img className="product-image" src={p.image_url} alt={p.name} />
-                )}
-                <div className="product-footer">
-                  <div className="pill">
-                    <span className="pill-dot" />
-                    <span>{p.stock > 0 ? `En stock: ${p.stock}` : 'Rupture de stock'}</span>
-                  </div>
-                  {p.stock > 0 ? (
-                    <button type="button" onClick={() => handleAddToCart(p.id)}>
-                      Ajouter au panier
-                    </button>
-                  ) : (
-                    <button type="button" disabled>
-                      Indisponible
-                    </button>
+                <div className="product-image-container">
+                  {p.image_url && (
+                    <img className="product-image" src={p.image_url} alt={p.name} />
                   )}
+                </div>
+                <div className="product-content">
+                  <div className="stack-sm">
+                    <h3 className="product-name">{p.name}</h3>
+                    <p className="product-price">{p.price.toFixed(2)} €</p>
+                  </div>
+                  <div className="product-footer">
+                    <div className="pill">
+                      <span className="pill-dot" />
+                      <span>{p.stock > 0 ? `En stock: ${p.stock}` : 'Rupture'}</span>
+                    </div>
+                    {p.stock > 0 ? (
+                      <button className="add-to-cart-btn" onClick={() => handleAddToCart(p.id)}>
+                        Ajouter
+                      </button>
+                    ) : (
+                      <button className="add-to-cart-btn" disabled>
+                        Indisponible
+                      </button>
+                    )}
+                  </div>
                 </div>
               </article>
             ))}
@@ -211,7 +307,7 @@ function CatalogPage({ auth }: { auth: AuthState }) {
   )
 }
 
-function CartPage({ auth }: { auth: AuthState }) {
+function CartPage({ auth, onLogout }: { auth: AuthState, onLogout: () => void }) {
   const [cart, setCart] = useState<CartResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -231,6 +327,10 @@ function CartPage({ auth }: { auth: AuthState }) {
             Authorization: `Bearer ${auth.token}`,
           },
         })
+        if (res.status === 401) {
+          onLogout()
+          throw new Error('Session expirée. Veuillez vous reconnecter.')
+        }
         if (!res.ok) {
           throw new Error('Erreur lors du chargement du panier')
         }
@@ -243,7 +343,7 @@ function CartPage({ auth }: { auth: AuthState }) {
       }
     }
     run()
-  }, [auth.token])
+  }, [auth.token, onLogout])
 
   if (!auth.token) {
     return (
@@ -306,14 +406,44 @@ function CartPage({ auth }: { auth: AuthState }) {
           {cart.items.length === 0 ? (
             <p className="muted">Ton panier est vide.</p>
           ) : (
-            <ul className="list-reset stack-sm">
-              {cart.items.map((item) => (
-                <li key={item.id} className="pill-ghost">
-                  <span className="pill-ghost-strong">Produit #{item.product_id}</span>
-                  <span>× {item.quantity}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="cart-container">
+              <ul className="cart-list">
+                {cart.items.map((item) => (
+                  <li key={item.id} className="cart-item">
+                    <div className="cart-item-visual">
+                      {item.product?.image_url ? (
+                        <img src={item.product.image_url} alt={item.product.name} className="cart-thumb" />
+                      ) : (
+                        <div className="cart-thumb-placeholder" />
+                      )}
+                    </div>
+                    <div className="cart-item-info">
+                      <h3 className="cart-item-title">{item.product?.name || `Produit #${item.product_id}`}</h3>
+                      <div className="cart-item-meta">
+                        <span className="pill-ghost">Qté: {item.quantity}</span>
+                        <span className="cart-item-price">
+                          {item.product ? `${item.product.price.toFixed(2)} €` : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="cart-item-total">
+                      {item.product ? (item.product.price * item.quantity).toFixed(2) : '0.00'} €
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="cart-summary">
+                <div className="cart-total-row">
+                  <span>Total</span>
+                  <span className="cart-total-amount">
+                    {cart.items
+                      .reduce((acc, item) => acc + (item.product?.price || 0) * item.quantity, 0)
+                      .toFixed(2)}{' '}
+                    €
+                  </span>
+                </div>
+              </div>
+            </div>
           )}
           {cart.items.length > 0 && auth.token && (
             <div className="form-actions">
@@ -625,9 +755,9 @@ function App() {
         </header>
         <main>
           <Routes>
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<HomePage auth={auth} />} />
             <Route path="/catalog" element={<CatalogPage auth={auth} />} />
-            <Route path="/cart" element={<CartPage auth={auth} />} />
+            <Route path="/cart" element={<CartPage auth={auth} onLogout={handleLogout} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/register" element={<RegisterPage onLogin={handleLogin} />} />
           </Routes>
