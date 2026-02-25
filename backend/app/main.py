@@ -22,11 +22,15 @@ sentry_sdk.init(
 
 app = FastAPI(title="PC Gaming Shop API", version="0.1.0")
 
-origins = ["*"]
+origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
