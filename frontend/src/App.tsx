@@ -573,7 +573,7 @@ function LoginPage({ onLogin }: AuthFormProps) {
   )
 }
 
-function RegisterPage({ onLogin }: AuthFormProps) {
+function RegisterPage(_: AuthFormProps) {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
