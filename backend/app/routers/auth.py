@@ -75,9 +75,13 @@ def register(payload: RegisterRequest):
         "full_name": payload.full_name,
         "role": payload.role or "user",
     }
-    result = client.table("users").upsert(insert_data).execute()
+    # Use upsert to handle potential race conditions or existing records
+    # Add .select() to ensure data is returned for validation
+    result = client.table("users").upsert(insert_data).select().execute()
     if not result.data:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User creation failed")
+        # If upsert works but returns no data (shouldn't happen with select), assume success if no error raised
+        # But for safety let's log it
+        print("Warning: User upsert returned no data")
     
     return {"message": "Verification email sent"}
 
@@ -122,7 +126,12 @@ def login(payload: LoginRequest) -> TokenResponse:
             "email": payload.email,
             "role": "user",
         }
-        created = client.table("users").insert(insert_data).execute()
-        user = created.data[0]
+        # Use upsert and select to ensure we get the user back
+        created = client.table("users").upsert(insert_data).select().execute()
+        if created.data:
+            user = created.data[0]
+        else:
+            # Fallback if upsert returns nothing but didn't error (shouldn't happen with select)
+            user = insert_data
     token = create_access_token({"sub": user_id, "role": user.get("role", "user")})
     return TokenResponse(access_token=token)

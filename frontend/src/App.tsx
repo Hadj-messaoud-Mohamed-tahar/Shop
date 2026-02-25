@@ -618,7 +618,8 @@ function RegisterPage(_: AuthFormProps) {
         body: JSON.stringify({ email, password, full_name: fullName }),
       })
       if (!res.ok) {
-        throw new Error('Erreur lors de la création du compte')
+        const errorData = await res.json().catch(() => ({ detail: 'Erreur lors de la création du compte' }))
+        throw new Error(errorData.detail || 'Erreur lors de la création du compte')
       }
       navigate('/verify-email')
     } catch (e) {
