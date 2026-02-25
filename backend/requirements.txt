@@ -11,3 +11,4 @@ email-validator
 websockets>=13.0
 gunicorn
 requests
+sentry-sdk[fastapi]

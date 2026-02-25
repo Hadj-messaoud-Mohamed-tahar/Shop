@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+import sentry_sdk
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -11,6 +12,13 @@ from .routers.payments import router as payments_router
 
 
 load_dotenv(override=True)
+
+sentry_sdk.init(
+    dsn="https://b56eb4fce976d6d4d5808374cc910db1@o4510946308390912.ingest.de.sentry.io/4510946329165904",
+    # Add data like request headers and IP for users,
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
 
 app = FastAPI(title="PC Gaming Shop API", version="0.1.0")
 
