@@ -52,6 +52,17 @@ def register(payload: RegisterRequest):
     if not user_obj or not getattr(user_obj, "id", None):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User creation failed")
     user_id = str(user_obj.id)
+    
+    # Clean up potentially stale user record if it exists with same email but different ID
+    try:
+        existing_user_res = client.table("users").select("id").eq("email", payload.email).limit(1).execute()
+        existing_user = existing_user_res.data[0] if existing_user_res.data else None
+        if existing_user and existing_user["id"] != user_id:
+            # Delete the old record
+            client.table("users").delete().eq("id", existing_user["id"]).execute()
+    except Exception as e:
+        print(f"Warning cleaning up stale user: {e}")
+
     insert_data = {
         "id": user_id,
         "email": payload.email,
@@ -85,6 +96,15 @@ def login(payload: LoginRequest) -> TokenResponse:
     result = client.table("users").select("id,email,role").eq("id", user_id).limit(1).execute()
     user = result.data[0] if result.data else None
     if not user:
+        # Check for stale user with same email but different ID
+        try:
+            stale_user_res = client.table("users").select("id").eq("email", payload.email).limit(1).execute()
+            stale_user = stale_user_res.data[0] if stale_user_res.data else None
+            if stale_user and stale_user["id"] != user_id:
+                client.table("users").delete().eq("id", stale_user["id"]).execute()
+        except Exception as e:
+            print(f"Warning cleaning up stale user in login: {e}")
+
         insert_data = {
             "id": user_id,
             "email": payload.email,
