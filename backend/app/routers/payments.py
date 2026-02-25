@@ -25,7 +25,10 @@ def get_stripe_client():
     return stripe
 
 @router.post("/checkout")
-def create_checkout_session(current_user=Depends(get_current_user)):
+def create_checkout_session(
+    payload: Optional[CheckoutRequest] = Body(default=None),
+    current_user=Depends(get_current_user)
+):
     client = get_supabase_client()
     cart_res = client.table("carts").select("*").eq("user_id", current_user["id"]).execute()
     if not cart_res.data:
