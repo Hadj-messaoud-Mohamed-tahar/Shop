@@ -82,8 +82,8 @@ def login(payload: LoginRequest) -> TokenResponse:
     if not user_obj or not getattr(user_obj, "id", None):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     user_id = str(user_obj.id)
-    result = client.table("users").select("id,email,role").eq("id", user_id).single().execute()
-    user = result.data
+    result = client.table("users").select("id,email,role").eq("id", user_id).limit(1).execute()
+    user = result.data[0] if result.data else None
     if not user:
         insert_data = {
             "id": user_id,

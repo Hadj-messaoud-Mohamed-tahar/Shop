@@ -36,8 +36,8 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]) -> Dict[str,
             headers={"WWW-Authenticate": "Bearer"},
         )
     client = get_supabase_client()
-    result = client.table("users").select("id,email,role").eq("id", user_id).single().execute()
-    user = result.data
+    result = client.table("users").select("id,email,role").eq("id", user_id).limit(1).execute()
+    user = result.data[0] if result.data else None
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
