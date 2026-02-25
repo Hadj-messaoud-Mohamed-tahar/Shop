@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
@@ -33,11 +34,16 @@ class LoginRequest(BaseModel):
     password: str
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-def register(payload: RegisterRequest) -> TokenResponse:
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+def register(payload: RegisterRequest):
     client = get_supabase_client()
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
     try:
-        auth_response = client.auth.sign_up({"email": payload.email, "password": payload.password})
+        auth_response = client.auth.sign_up({
+            "email": payload.email, 
+            "password": payload.password,
+            "options": {"email_redirect_to": f"{frontend_url}/login"}
+        })
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=f"Supabase sign up failed: {exc}"
@@ -55,9 +61,8 @@ def register(payload: RegisterRequest) -> TokenResponse:
     result = client.table("users").upsert(insert_data).execute()
     if not result.data:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="User creation failed")
-    user = result.data[0]
-    token = create_access_token({"sub": str(user["id"]), "role": user.get("role", "user")})
-    return TokenResponse(access_token=token)
+    
+    return {"message": "Verification email sent"}
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -69,6 +74,9 @@ def login(payload: LoginRequest) -> TokenResponse:
         )
     except Exception as e:
         print(f"Login error: {e}")
+        error_msg = str(e).lower()
+        if "email not confirmed" in error_msg:
+             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email not confirmed")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     user_obj = getattr(auth_response, "user", None)
     if not user_obj or not getattr(user_obj, "id", None):

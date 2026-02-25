@@ -33,6 +33,33 @@ type CartResponse = {
   items: CartItem[]
 }
 
+
+function VerifyEmailSent() {
+  return (
+    <div className="app-main app-main-wide">
+      <div className="app-main-col">
+        <section className="app-card stack-md">
+          <div className="section-header">
+            <div>
+              <div className="section-kicker">Inscription réussie</div>
+              <h2 className="section-title">Vérifiez votre email</h2>
+            </div>
+          </div>
+          <p className="section-subtitle">
+            Un email de confirmation a été envoyé à votre adresse.
+            Veuillez cliquer sur le lien dans l'email pour activer votre compte.
+          </p>
+          <div className="form-actions">
+            <Link to="/login" className="hero-cta">
+              Retour à la connexion
+            </Link>
+          </div>
+        </section>
+      </div>
+    </div>
+  )
+}
+
 function HomePage({ auth }: { auth: AuthState }) {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -591,9 +618,7 @@ function RegisterPage({ onLogin }: AuthFormProps) {
       if (!res.ok) {
         throw new Error('Erreur lors de la création du compte')
       }
-      const data = (await res.json()) as { access_token: string }
-      onLogin(data.access_token, email)
-      navigate('/catalog')
+      navigate('/verify-email')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur inconnue')
     } finally {
@@ -760,6 +785,7 @@ function App() {
             <Route path="/cart" element={<CartPage auth={auth} onLogout={handleLogout} />} />
             <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
             <Route path="/register" element={<RegisterPage onLogin={handleLogin} />} />
+            <Route path="/verify-email" element={<VerifyEmailSent />} />
           </Routes>
         </main>
       </div>

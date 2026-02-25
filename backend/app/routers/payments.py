@@ -61,6 +61,7 @@ def create_checkout_session(current_user=Depends(get_current_user)):
             mode="payment",
             payment_method_types=["card"],
             line_items=line_items,
+            customer_email=current_user.get("email"),
             metadata={
                 "user_id": str(current_user["id"]),
                 "cart_id": str(cart["id"]),
