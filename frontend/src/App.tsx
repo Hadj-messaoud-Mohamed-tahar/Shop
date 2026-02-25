@@ -482,8 +482,10 @@ function CartPage({ auth, onLogout }: { auth: AuthState, onLogout: () => void })
                     const res = await fetch(`${API_BASE_URL}/payments/checkout`, {
                       method: 'POST',
                       headers: {
+                        'Content-Type': 'application/json',
                         Authorization: `Bearer ${auth.token}`,
                       },
+                      body: JSON.stringify({ return_url: window.location.origin }),
                     })
                     if (!res.ok) {
                       const detail = await res.text()

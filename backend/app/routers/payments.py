@@ -2,13 +2,19 @@ import os
 import json
 
 import stripe
-from fastapi import APIRouter, HTTPException, Depends, Request
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Depends, Request, Body
+from pydantic import BaseModel
 
 from ..core.supabase_client import get_supabase_client
 from ..dependencies.auth import get_current_user
 
 
 router = APIRouter(prefix="/payments", tags=["payments"])
+
+
+class CheckoutRequest(BaseModel):
+    return_url: Optional[str] = None
 
 
 def get_stripe_client():
@@ -51,7 +57,12 @@ def create_checkout_session(current_user=Depends(get_current_user)):
     if not line_items:
         raise HTTPException(status_code=400, detail="No valid items")
     
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+    if payload and payload.return_url:
+        frontend_url = payload.return_url
+    else:
+        frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    
+    frontend_url = frontend_url.rstrip("/")
     if not frontend_url.startswith("http"):
         frontend_url = f"https://{frontend_url}"
     
