@@ -76,10 +76,9 @@ def register(payload: RegisterRequest):
         "role": payload.role or "user",
     }
     # Use upsert to handle potential race conditions or existing records
-    # Add .select() to ensure data is returned for validation
-    result = client.table("users").upsert(insert_data).select().execute()
+    result = client.table("users").upsert(insert_data).execute()
     if not result.data:
-        # If upsert works but returns no data (shouldn't happen with select), assume success if no error raised
+        # If upsert works but returns no data, assume success if no error raised
         # But for safety let's log it
         print("Warning: User upsert returned no data")
     
@@ -127,7 +126,7 @@ def login(payload: LoginRequest) -> TokenResponse:
             "role": "user",
         }
         # Use upsert and select to ensure we get the user back
-        created = client.table("users").upsert(insert_data).select().execute()
+        created = client.table("users").upsert(insert_data).execute()
         if created.data:
             user = created.data[0]
         else:
